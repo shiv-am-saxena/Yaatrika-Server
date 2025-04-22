@@ -1,70 +1,64 @@
-import { Model, Schema } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { model } from 'mongoose';
 
+const SALT_ROUNDS = 10;
+const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key'; // Should be stored in .env
 
 export interface IUser extends Document {
-	fullName: { firstName: string; lastName?: string };
+	name: string;
 	email: string;
+	phone: string;
 	password: string;
-	socketId?: string;
-	isValidPassword(password: string): Promise<boolean>;
-	genJWT(): string;
+	userType: 'passenger' | 'driver';
+	rating: number;
+	comparePassword(candidatePassword: string): Promise<boolean>;
+	generateJWT(): string;
 }
 
-// Define an interface for the User model
-export interface IUserModel extends Model<IUser> {
-	hashPassword(password: string): Promise<string>;
-}
-const userSchema: Schema<IUser> = new Schema({
-	fullName: {
-		firstName: {
-			type: String,
-			required: true,
-			minLength: [3, 'First name should be at least 3 characters long.']
-		},
-		lastName: {
-			type: String,
-			minLength: [3, 'Last name should be at least 3 characters long.']
-		}
+const UserSchema: Schema<IUser> = new Schema(
+	{
+		name: { type: String, required: true },
+		email: { type: String, required: true, unique: true },
+		phone: { type: String, required: true },
+		password: { type: String, required: true },
+		userType: { type: String, enum: ['passenger', 'driver'], required: true },
+		rating: { type: Number, default: 0 }
 	},
-	email: {
-		type: String,
-		required: true,
-		unique: true
-	},
-	password: {
-		type: String,
-		required: true,
-		select: false
-	},
-	socketId: {
-		type: String
+	{ timestamps: true }
+);
+
+// Hash password before saving
+UserSchema.pre<IUser>('save', async function (next) {
+	if (!this.isModified('password')) return next();
+	try {
+		const salt = await bcrypt.genSalt(SALT_ROUNDS);
+		this.password = await bcrypt.hash(this.password, salt);
+		next();
+	} catch (error) {
+		next(error as mongoose.CallbackError);
 	}
 });
 
-userSchema.statics.hashPassword = async function (
-	password: string
-): Promise<string> {
-	return await bcrypt.hash(password, 10);
-};
-
-// Instance method
-userSchema.methods.isValidPassword = async function (
-	password: string
+// Compare plaintext and hashed passwords
+UserSchema.methods.comparePassword = async function (
+	candidatePassword: string
 ): Promise<boolean> {
-	return await bcrypt.compare(password, this.password);
+	return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Generate JWT Token
-userSchema.methods.genJWT = function (): string {
+// Generate JWT token
+UserSchema.methods.generateJWT = function (): string {
 	return jwt.sign(
-		{ id: this._id, email: this.email },
-		process.env.JWT_SECRET as string,
-		{ expiresIn: '24h' }
+		{
+			id: this._id,
+			email: this.email,
+			userType: this.userType
+		},
+		JWT_SECRET,
+		{ expiresIn: '7d' }
 	);
 };
 
-// Export the User model
-export const User = model<IUser, IUserModel>('User', userSchema);
+const User: Model<IUser> = mongoose.model<IUser>('User', UserSchema);
+export default User;
