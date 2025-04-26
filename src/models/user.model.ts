@@ -12,6 +12,7 @@ export interface IUser extends Document {
 	password: string;
 	userType: 'passenger' | 'driver';
 	rating: number;
+	isVerified: boolean;
 	comparePassword(candidatePassword: string): Promise<boolean>;
 	generateJWT(): string;
 }
@@ -23,7 +24,8 @@ const UserSchema: Schema<IUser> = new Schema(
 		phone: { type: String, required: true },
 		password: { type: String, required: true },
 		userType: { type: String, enum: ['passenger', 'driver'], required: true },
-		rating: { type: Number, default: 0 }
+		rating: { type: Number, default: 0 },
+		isVerified: {type: Boolean, default: false},
 	},
 	{ timestamps: true }
 );
@@ -51,9 +53,8 @@ UserSchema.methods.comparePassword = async function (
 UserSchema.methods.generateJWT = function (): string {
 	return jwt.sign(
 		{
-			id: this._id,
-			email: this.email,
-			userType: this.userType
+			_id: this._id,
+			email: this.email
 		},
 		JWT_SECRET,
 		{ expiresIn: '7d' }
