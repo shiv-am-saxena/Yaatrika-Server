@@ -1,0 +1,35 @@
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { apiResponse } from './utils/apiResponse.js';
+import ApiError from './utils/ApiError.js';
+import authRouter from './routes/user.auth.route.js';
+import { IUser } from './types/user.js';
+import { stream } from "./utils/logger.js";
+import morgan from 'morgan';
+const app = express();
+
+app.use(morgan("combined", { stream }));
+app.use(
+	cors({
+		origin: process.env.CORS_ORIGIN,
+		credentials: true
+	})
+);
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+app.get('/', (req: Request, res: Response) => {
+	res.send('Welcome to Yaatrika API');
+});
+app.get('/verify-token', (req:Request, res:Response)=>{
+	// This endpoint is used to verify the token and return user details
+	const user = (req as Request & {user: IUser}).user; // Assuming req.user is set by a middleware that verifies the token
+	if (!user) {
+		throw new ApiError(401, "Unauthorized");
+	}
+	res.status(200).json(new apiResponse(200, user, "User Authenticated"));
+});
+app.use('/api/v1/auth/user', authRouter);
+export { app };
