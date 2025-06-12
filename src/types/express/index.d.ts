@@ -1,9 +1,6 @@
-import { IUser } from '../user';
+import { IUser } from '../user'; // adjust import path
+import { Request } from 'express';
 
-declare global {
-	namespace Express {
-		interface Request {
-			user?: string | IUser; // You can make this more specific if needed
-		}
-	}
+export interface IRequest extends Request {
+	user?: IUser;
 }

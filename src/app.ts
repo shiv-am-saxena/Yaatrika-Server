@@ -7,6 +7,7 @@ import authRouter from './routes/user.auth.route.js';
 import { IUser } from './types/user.js';
 import { stream } from "./utils/logger.js";
 import morgan from 'morgan';
+import { IRequest } from './types/express/index.js';
 const app = express();
 
 app.use(morgan("combined", { stream }));
@@ -23,9 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req: Request, res: Response) => {
 	res.send('Welcome to Yaatrika API');
 });
-app.get('/verify-token', (req:Request, res:Response)=>{
+app.get('/verify-token', (req:IRequest, res:Response)=>{
 	// This endpoint is used to verify the token and return user details
-	const user = (req as Request & {user: IUser}).user; // Assuming req.user is set by a middleware that verifies the token
+	const user = req.user; // Assuming req.user is set by a middleware that verifies the token
 	if (!user) {
 		throw new ApiError(401, "Unauthorized");
 	}

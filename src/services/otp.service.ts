@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 import redisClient from './redisService.js';
 import ApiError from '../utils/ApiError.js';
-
+import dotenv from 'dotenv';
+dotenv.config();
 const OTP_TTL = 300; // seconds (5 minutes)
 const OTP_SECRET = process.env.OTP_SECRET as string; // keep this in .env
 
@@ -26,10 +27,12 @@ export const saveOtpToRedis = async (
 	phoneNumber: string,
 	otp: string,
 	ttl: number = OTP_TTL
-): Promise<void> => {
+): Promise<boolean> => {
 	const hashedOtp = hashOtp(otp);
+	console.log(OTP_SECRET);
 	try {
 		await redisClient.set(phoneNumber, hashedOtp, 'EX', ttl);
+		return true;
 	} catch (error) {
 		throw new ApiError(500, 'Failed to store OTP in Redis');
 	}

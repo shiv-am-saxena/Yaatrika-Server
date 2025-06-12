@@ -1,4 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
+import { IRequest } from '../types/express/index';
 import jwt from 'jsonwebtoken';
 import redisClient from '../services/redisService.js';
 import ApiError from '../utils/ApiError.js'; 
@@ -8,10 +9,10 @@ import User from '../models/user.model.js';
 import { IUser } from '../types/user';
 
 export const isLoggedIn = asyncHandler(
-	async (req: Request, res: Response, next: NextFunction) => {
+	async (req: IRequest, res: Response, next: NextFunction) => {
 		try {
 			const token =
-				req.cookies.authToken || req.headers.authorization?.split(' ')[1];
+				req.cookies.auth_token || req.headers.authorization?.split(' ')[1];
 
 			//Early exit for missing token
 			if (!token) {
@@ -36,7 +37,7 @@ export const isLoggedIn = asyncHandler(
 			if (!user) {
 				throw new ApiError(401, 'Unauthorized: User not found');
 			}
-			(req as Request & { user?: IUser }).user = user;
+			req.user = user;
 			next();
 		} catch (error: any) {
 			//Handle Specific Errors for better debugging

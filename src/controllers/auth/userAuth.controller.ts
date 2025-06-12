@@ -84,7 +84,7 @@ export const loginWithOtp = asyncHandler(
 			throw new ApiError(400, 'Phone number and OTP are required');
 		}
 
-		let isVerified:boolean;
+		let isVerified: boolean;
 
 		if (process.env.NODE_ENV !== 'production') {
 			// OTP verification via Redis (dev/staging)
@@ -132,7 +132,7 @@ export const loginWithOtp = asyncHandler(
 				sameSite: 'strict',
 				maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 			})
-			.json(new apiResponse(200, user, 'Login successful'));
+			.json(new apiResponse(200, {user, token}, 'Login successful'));
 	}
 );
 
@@ -153,30 +153,42 @@ export const logout = async (req: Request, res: Response) => {
 			sameSite: 'strict',
 			maxAge: 0 // Clear the cookie
 		})
-		.json({ message: 'Successfully logged out' });
+		.json(new apiResponse(200, null, 'Successfully Logged Out'));
 };
 
 export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
 	const { phoneNumber } = req.body;
-	if (!phoneNumber) {
-		throw new ApiError(400, 'Phone number is required');
+
+	if (!phoneNumber || typeof phoneNumber !== 'string') {
+		throw new ApiError(400, 'Valid phone number is required');
 	}
-	// Generate OTP and send it via SMS (implementation not shown)
-	const otp = generateOtp();
-	if (!otp) {
-		throw new ApiError(500, 'Failed to generate OTP');
-	}
-	//IF the Node env is development it will sent otp via crypto module as a response which will be displayed on the client side as a alert.
+
+	// Development environment: generate OTP and send via response
 	if (process.env.NODE_ENV !== 'production') {
-		await saveOtpToRedis(phoneNumber, otp);
-		res.status(201).json(new apiResponse(200, otp, 'OTP Sent successfully.'));
+		const otp = generateOtp();
+		if (!otp) {
+			throw new ApiError(500, 'Failed to generate OTP');
+		}
+
+		const result = await saveOtpToRedis(phoneNumber, otp);
+		if (!result) {
+			throw new ApiError(500, 'Failed to save OTP to Redis');
+		}
+
+		res.status(201).json(new apiResponse(201, otp, 'OTP sent successfully'));
 		return;
 	}
 
-	//if the node env is production it will use twilio to sent the otp and using this the user will get otp @ provided phone number
+	// Production: use Twilio
 	const isOTPSent = await sendVerificationOtp(phoneNumber);
-	if (isOTPSent.sendCodeAttempts.length === 0) {
-		throw new ApiError(500, 'Failed to send OTP');
+
+	if (
+		!isOTPSent ||
+		!Array.isArray(isOTPSent.sendCodeAttempts) ||
+		isOTPSent.sendCodeAttempts.length === 0
+	) {
+		throw new ApiError(500, 'Failed to send OTP via SMS');
 	}
-	res.status(201).json(new apiResponse(201, null, 'OTP SENT SUCCESSFULLY'));
+
+	res.status(201).json(new apiResponse(201, null, 'OTP sent successfully'));
 });

@@ -1,10 +1,11 @@
 import Redis from 'ioredis';
-
+import dotenv from 'dotenv';
+dotenv.config();
 const redisClient: Redis = new Redis({
-	host: 'redis-15768.c301.ap-south-1-1.ec2.redns.redis-cloud.com',
-	port: 15768,
+	host: process.env.REDIS_HOST,
+	port: process.env.REDIS_PORT as unknown as number,
 	username: 'default',
-	password: '3plT3be3pdJ2zwMs0HzCv2X7B2oBzofF'
+	password: process.env.REDIS_PASSWORD,
 });
 redisClient.on('connect', () => {
 	console.log('Connected to Redis');
