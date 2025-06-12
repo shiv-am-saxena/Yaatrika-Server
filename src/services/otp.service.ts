@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import redisClient from './redis.service.js';
+import redisClient from './redisService.js';
 import ApiError from '../utils/ApiError.js';
 
 const OTP_TTL = 300; // seconds (5 minutes)

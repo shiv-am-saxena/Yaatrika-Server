@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import redisClient from '../services/redis.service.js';
+import redisClient from '../services/redisService.js';
 import ApiError from '../utils/ApiError.js'; 
 import { jwtPayload } from '../types/jwtPayload';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -27,7 +27,7 @@ export const isLoggedIn = asyncHandler(
 			// Verify token
 			const payload = jwt.verify(
 				token,
-				`${process.env.ACCESS_TOKEN_SECRET}`
+				`${process.env.JWT_SECRET}`
 			) as jwtPayload;
 			const user: IUser = await User.findById(payload._id).select(
 				'-password'
