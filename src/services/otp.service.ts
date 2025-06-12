@@ -3,7 +3,7 @@ import redisClient from './redisService.js';
 import ApiError from '../utils/ApiError.js';
 
 const OTP_TTL = 300; // seconds (5 minutes)
-const OTP_SECRET = process.env.OTP_SECRET || 'default_otp_secret'; // keep this in .env
+const OTP_SECRET = process.env.OTP_SECRET as string; // keep this in .env
 
 /**
  * Generate a secure 6-digit OTP

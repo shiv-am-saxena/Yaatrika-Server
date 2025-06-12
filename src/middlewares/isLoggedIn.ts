@@ -19,7 +19,7 @@ export const isLoggedIn = asyncHandler(
 			}
 
 			//Check Blacklist First (for performance)
-			const isBlacklisted = await redisClient.get(token);
+			const isBlacklisted = await redisClient.getex(`blacklistedToken:${token}`);
 			if (isBlacklisted) {
 				throw new ApiError(401, 'Unauthorized: Token Blacklisted');
 			}

@@ -12,7 +12,10 @@ import {
 	verifyOtpFromRedis
 } from '../../services/otp.service.js';
 import jwt from 'jsonwebtoken';
-import { sendVerificationOtp, verifyOtpCode } from '../../services/sms.service.js';
+import {
+	sendVerificationOtp,
+	verifyOtpCode
+} from '../../services/sms.service.js';
 export const registerUser = asyncHandler(
 	async (req: Request, res: Response) => {
 		const {
@@ -80,52 +83,56 @@ export const loginWithOtp = asyncHandler(
 		if (!phoneNumber || !otp) {
 			throw new ApiError(400, 'Phone number and OTP are required');
 		}
-		let isVerified:boolean =;
-// in this case if the env is development the otp will be verified from the redisDatabase
-		if (process.env.NODE_ENV !== 'production') {
-			// 1. Verify OTP against Redis
-			const isOtpValid = await verifyOtpFromRedis(phoneNumber, otp);
 
-			if (!isOtpValid) {
+		let isVerified:boolean;
+
+		if (process.env.NODE_ENV !== 'production') {
+			// OTP verification via Redis (dev/staging)
+			isVerified = await verifyOtpFromRedis(phoneNumber, otp);
+
+			if (!isVerified) {
 				throw new ApiError(401, 'Invalid or expired OTP');
 			}
 
-			// 2. Delete OTPd after successful verification
+			// Remove OTP from Redis after successful verification
 			await deleteOtp(phoneNumber);
-			isVerified = isOtpValid;
-		}
-		else if(process.env.NODE_ENV === 'production'){
-			const isOtpValid = await verifyOtpCode(phoneNumber, otp);
-			if(!isOtpValid){
-				throw new ApiError(401, 'Invalid or Expired OTP');
-			}
-			isVerified = isOtpValid;
-		}
-		if(!isVerified){
-			throw new ApiError(401, "Unauthorized User");
-		}
-		// 3. Check if user exists
-		let user = await User.findOne({ phoneNumber });
+		} else {
+			// OTP verification via Twilio (production)
+			isVerified = await verifyOtpCode(phoneNumber, otp);
 
-		// 4. Auto-register user if not found (optional)
+			if (!isVerified) {
+				throw new ApiError(401, 'Invalid or expired OTP');
+			}
+		}
+
+		if (!isVerified) {
+			throw new ApiError(401, 'OTP verification failed');
+		}
+
+		// Find the user by phone number
+		const user = await User.findOne({ phoneNumber });
+
 		if (!user) {
 			throw new ApiError(404, 'User not found. Please register first.');
 		}
 
-		// 5. Generate JWT
+		// Generate JWT token
 		const token = user.generateJWT();
+
 		if (!token) {
-			throw new ApiError(500, 'Token Generation Failed');
+			throw new ApiError(500, 'Token generation failed');
 		}
+
+		// Set auth token as HTTP-only cookie
 		res
 			.status(200)
 			.cookie('auth_token', token, {
 				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+				secure: process.env.NODE_ENV === 'production',
 				sameSite: 'strict',
 				maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 			})
-			.json(new apiResponse(200, user, 'Login Successful'));
+			.json(new apiResponse(200, user, 'Login successful'));
 	}
 );
 

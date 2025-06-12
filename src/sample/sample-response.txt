@@ -1,0 +1,46 @@
+
+// // sample response for sendVerificationOTP
+// {
+//   "status": "pending",
+//   "payee": null,
+//   "date_updated": "2025-06-12T11:41:06Z",
+//   "send_code_attempts": [
+//     {
+//       "attempt_sid": "vsid",
+//       "channel": "sms",
+//       "time": "2025-06-12T11:41:06.031Z"
+//     }
+//   ],
+//   "account_sid": "sid",
+//   "to": "+919335047076",
+//   "amount": null,
+//   "valid": false,
+//   "lookup": {
+//     "carrier": {
+//       "mobile_country_code": "405",
+//       "type": "mobile",
+//       "error_code": null,
+//       "mobile_network_code": "871",
+//       "name": "Reliance (JIO) - Uttar Pradesh East"
+//     }
+//   },
+//   "url": "https://verify.twilio.com/v2/Services/VA42f5b1590257eb2a9eca4ac7c83960a5/Verifications/VEdbee38ec38df8ee5a786c0a22fa4471c",
+//   "sid": "ssid",
+//   "date_created": "2025-06-12T11:41:06Z",
+//   "service_sid": "sid",
+//   "channel": "sms"
+// },
+// // sample verificationResponse for Twilio
+// {
+//   "status": "approved",
+//   "payee": null,
+//   "date_updated": "2025-06-12T11:43:46Z",
+//   "account_sid": "sid",
+//   "to": "+919335047076",
+//   "amount": null,
+//   "valid": true,
+//   "sid": "ssid",
+//   "date_created": "2025-06-12T11:41:06Z",
+//   "service_sid": "sid",
+//   "channel": "sms"
+// }
