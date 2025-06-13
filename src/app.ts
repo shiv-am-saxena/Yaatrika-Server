@@ -32,5 +32,5 @@ app.get('/verify-token', isLoggedIn, (req: IRequest, res: Response) => {
 	}
 	res.status(200).json(new apiResponse(200, user, 'User Authenticated'));
 });
-app.use('/api/v1/auth/user', authRouter);
+app.use('/api/v1/auth/', authRouter);
 export { app };

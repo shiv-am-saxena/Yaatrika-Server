@@ -6,17 +6,16 @@ import User from '../../models/user.model.js';
 import { apiResponse } from '../../utils/apiResponse.js';
 import redisClient from '../../services/redisService.js';
 import {
-	deleteOtp,
 	generateOtp,
-	saveOtpToRedis,
-	verifyOtpFromRedis
-} from '../../services/otp.service.js';
+	saveOtpToRedis
+} from '../../services/otpService/otp.service.js';
 import jwt from 'jsonwebtoken';
-import {
-	sendVerificationOtp,
-	verifyOtpCode
-} from '../../services/sms.service.js';
-import { IRequest } from '../../types/express/index.js';
+import { sendVerificationOtp } from '../../services/otpService/sms.service.js';
+import { IRequest } from '../../types/express/index';
+import { otpVerification } from '../../services/otpVerification.service.js';
+import { ICaptain } from '../../types/captain';
+import Captain from '../../models/captain.model.js';
+
 export const registerUser = asyncHandler(
 	async (req: IRequest, res: Response) => {
 		const {
@@ -27,7 +26,7 @@ export const registerUser = asyncHandler(
 			phoneNumber,
 			gender,
 			countryCode,
-			isVerified,
+			isVerified
 		} = req.body;
 		if (
 			[
@@ -38,20 +37,16 @@ export const registerUser = asyncHandler(
 				email,
 				countryCode,
 				password,
-				isVerified,
-			].some((field) => field?.trim() === '' || typeof field === 'undefined')
+				isVerified
+			].some(
+				(field) =>
+					typeof field === 'undefined' ||
+					(typeof field === 'string' && field.trim() === '')
+			)
 		) {
 			throw new ApiError(400, 'All fields are required');
 		}
-		console.log(
-			firstName,
-			lastName,
-			email,
-			password,
-			phoneNumber,
-			gender,
-			countryCode,
-			isVerified)
+
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
 			throw new ApiError(400, 'User Already Exists');
@@ -78,80 +73,66 @@ export const registerUser = asyncHandler(
 			.status(201)
 			.cookie('auth_token', token, {
 				httpOnly: true,
-				secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+				secure: process.env.NODE_ENV === 'production',
 				sameSite: 'strict',
-				maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+				maxAge: 7 * 24 * 60 * 60 * 1000
 			})
-			.json(new apiResponse(201, user, 'User Registered Successfully'));
+			.json(new apiResponse(201, { user, token }, 'User Registered Successfully'));
 	}
 );
 
 export const loginWithOtp = asyncHandler(
 	async (req: Request, res: Response) => {
-		const { phoneNumber, otp } = req.body;
+		const { phoneNumber, otp, role = 'user' } = req.body;
 
 		if (!phoneNumber || !otp) {
 			throw new ApiError(400, 'Phone number and OTP are required');
 		}
 
-		let isVerified: boolean;
-
-		if (process.env.NODE_ENV !== 'production') {
-			// OTP verification via Redis (dev/staging)
-			isVerified = await verifyOtpFromRedis(phoneNumber, otp);
-
-			if (!isVerified) {
-				throw new ApiError(401, 'Invalid or expired OTP');
-			}
-
-			// Remove OTP from Redis after successful verification
-			await deleteOtp(phoneNumber);
-		} else {
-			// OTP verification via Twilio (production)
-			isVerified = await verifyOtpCode(phoneNumber, otp);
-
-			if (!isVerified) {
-				throw new ApiError(401, 'Invalid or expired OTP');
-			}
-		}
-
+		const isVerified = await otpVerification(phoneNumber, otp);
 		if (!isVerified) {
-			throw new ApiError(401, 'OTP verification failed');
+			throw new ApiError(400, 'Incorrect OTP');
 		}
 
-		// Find the user by phone number
-		const user = await User.findOne({ phoneNumber });
+		let user: IUser | ICaptain | null = null;
+
+		if (role === 'user') {
+			user = await User.findOne({ phoneNumber });
+			if (!user) {
+				user = await Captain.findOne({ phoneNumber });
+			}
+		}
 
 		if (!user) {
 			throw new ApiError(404, 'User not found. Please register first.');
 		}
 
-		// Generate JWT token
 		const token = user.generateJWT();
-
 		if (!token) {
 			throw new ApiError(500, 'Token generation failed');
 		}
 
-		// Set auth token as HTTP-only cookie
 		res
 			.status(200)
 			.cookie('auth_token', token, {
 				httpOnly: true,
 				secure: process.env.NODE_ENV === 'production',
 				sameSite: 'strict',
-				maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+				maxAge: 7 * 24 * 60 * 60 * 1000
 			})
-			.json(new apiResponse(200, {user, token}, 'Login successful'));
+			.json(new apiResponse(200, { user, token }, 'Login successful'));
 	}
 );
 
 export const logout = async (req: Request, res: Response) => {
-	const token = req.headers.authorization?.split(' ')[1];
-	if (!token) return res.status(400).json({ message: 'Token missing' });
-	// Add token to Redis blacklist with expiry same as token’s TTL
+	const token =
+		req.headers.authorization?.split(' ')[1] || req.cookies?.auth_token;
+	if (!token) {
+		throw new ApiError(400, 'Token Missing! Unable to Logout');
+	}
+
 	const decoded = jwt.decode(token) as { exp: number };
-	const ttl = decoded.exp - Math.floor(Date.now() / 1000); // in seconds
+	const ttl = decoded.exp - Math.floor(Date.now() / 1000);
 
 	await redisClient.setex(`blacklistedToken:${token}`, ttl, 'true');
 
@@ -159,9 +140,9 @@ export const logout = async (req: Request, res: Response) => {
 		.status(200)
 		.clearCookie('auth_token', {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+			secure: process.env.NODE_ENV === 'production',
 			sameSite: 'strict',
-			maxAge: 0 // Clear the cookie
+			maxAge: 0
 		})
 		.json(new apiResponse(200, null, 'Successfully Logged Out'));
 };
@@ -173,7 +154,6 @@ export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
 		throw new ApiError(400, 'Valid phone number is required');
 	}
 
-	// Development environment: generate OTP and send via response
 	if (process.env.NODE_ENV !== 'production') {
 		const otp = generateOtp();
 		if (!otp) {
@@ -189,7 +169,6 @@ export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
 		return;
 	}
 
-	// Production: use Twilio
 	const isOTPSent = await sendVerificationOtp(phoneNumber);
 
 	if (
@@ -203,47 +182,17 @@ export const sendOtp = asyncHandler(async (req: Request, res: Response) => {
 	res.status(201).json(new apiResponse(201, null, 'OTP sent successfully'));
 });
 
-export const verifyOtp = asyncHandler(async( req:Request, res: Response)=>{
-		const { phoneNumber, otp } = req.body;
+export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
+	const { phoneNumber, otp } = req.body;
 
-		if (!phoneNumber || !otp) {
-			throw new ApiError(400, 'Phone number and OTP are required');
-		}
+	if (!phoneNumber || !otp) {
+		throw new ApiError(400, 'Phone number and OTP are required');
+	}
 
-		let isVerified: boolean;
+	const isVerified = await otpVerification(phoneNumber, otp);
+	if (!isVerified) {
+		throw new ApiError(401, 'OTP verification failed');
+	}
 
-		if (process.env.NODE_ENV !== 'production') {
-			// OTP verification via Redis (dev/staging)
-			isVerified = await verifyOtpFromRedis(phoneNumber, otp);
-
-			if (!isVerified) {
-				throw new ApiError(401, 'Invalid or expired OTP');
-			}
-
-			// Remove OTP from Redis after successful verification
-			await deleteOtp(phoneNumber);
-		} else {
-			// OTP verification via Twilio (production)
-			isVerified = await verifyOtpCode(phoneNumber, otp);
-
-			if (!isVerified) {
-				throw new ApiError(401, 'Invalid or expired OTP');
-			}
-		}
-
-		if (!isVerified) {
-			throw new ApiError(401, 'OTP verification failed');
-		}
-
-		// Find the user by phone number
-		const user = await User.findOne({ phoneNumber });
-
-		if (user) {
-			throw new ApiError(404, 'User already exist.');
-		}
-
-		// Set auth token as HTTP-only cookie
-		res
-			.status(200)
-			.json(new apiResponse(200, true, 'OTP Verified Successfully'));
-})
+	res.status(200).json(new apiResponse(200, true, 'OTP Verified Successfully'));
+});

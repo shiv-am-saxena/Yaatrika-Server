@@ -2,55 +2,57 @@ import { Response, NextFunction } from 'express';
 import { IRequest } from '../types/express/index';
 import jwt from 'jsonwebtoken';
 import redisClient from '../services/redisService.js';
-import ApiError from '../utils/ApiError.js'; 
+import ApiError from '../utils/ApiError.js';
 import { jwtPayload } from '../types/jwtPayload';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import User from '../models/user.model.js';
+import Captain from '../models/captain.model.js';
 import { IUser } from '../types/user';
+import {ICaptain} from '../types/captain';
 
 export const isLoggedIn = asyncHandler(
 	async (req: IRequest, res: Response, next: NextFunction) => {
+		const token =
+			req.cookies?.auth_token || req.headers.authorization?.split(' ')[1];
+
+		if (!token) {
+			throw new ApiError(401, 'Unauthorized: Missing token');
+		}
+
+		// ✅ Validate against blacklist (stored in Redis)
+		const isBlacklisted = await redisClient.get(`blacklistedToken:${token}`);
+		if (isBlacklisted) {
+			throw new ApiError(401, 'Unauthorized: Token blacklisted');
+		}
+
 		try {
-			const token =
-				req.cookies.auth_token || req.headers.authorization?.split(' ')[1];
+			const payload = jwt.verify(token, process.env.JWT_SECRET!) as jwtPayload;
 
-			//Early exit for missing token
-			if (!token) {
-				throw new ApiError(401, 'Unauthorized: Missing Token');
+			let user: IUser | ICaptain | null = null;
+
+			if (payload.role === 'captain') {
+				user = await Captain.findById(payload._id);
+			} else {
+				user = await User.findById(payload._id);
 			}
-
-			//Check Blacklist First (for performance)
-			const isBlacklisted = await redisClient.getex(`blacklistedToken:${token}`);
-			if (isBlacklisted) {
-				throw new ApiError(401, 'Unauthorized: Token Blacklisted');
-			}
-
-			// Verify token
-			const payload = jwt.verify(
-				token,
-				`${process.env.JWT_SECRET}`
-			) as jwtPayload;
-			const user: IUser = await User.findById(payload._id).select(
-				'-password'
-			);
 
 			if (!user) {
 				throw new ApiError(401, 'Unauthorized: User not found');
 			}
+
 			req.user = user;
 			next();
 		} catch (error: any) {
-			//Handle Specific Errors for better debugging
-			if (error instanceof ApiError) {
-				throw error; //Re-throw ApiError for consistent error handling
-			} else if (error.name === 'TokenExpiredError') {
-				throw new ApiError(401, 'Unauthorized: Token Expired');
-			} else if (error.name === 'JsonWebTokenError') {
-				throw new ApiError(401, 'Unauthorized: Invalid Token');
+			if (error.name === 'TokenExpiredError') {
+				throw new ApiError(401, 'Unauthorized: Token expired');
 			}
-			throw new ApiError(500, 'Internal Server Error during authentication'); //Generic Server Error
+
+			if (error.name === 'JsonWebTokenError') {
+				throw new ApiError(401, 'Unauthorized: Invalid token');
+			}
+
+			console.error('Unexpected error in isLoggedIn:', error);
+			throw new ApiError(500, 'Internal Server Error during authentication');
 		}
 	}
 );
-// This middleware checks if the user is logged in by verifying the JWT token.
-// It checks for the token in cookies or authorization headers, verifies it,

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import redisClient from './redisService.js';
-import ApiError from '../utils/ApiError.js';
+import redisClient from '../redisService.js';
+import ApiError from '../../utils/ApiError.js';
 import dotenv from 'dotenv';
 dotenv.config();
 const OTP_TTL = 300; // seconds (5 minutes)
