@@ -29,7 +29,6 @@ export const saveOtpToRedis = async (
 	ttl: number = OTP_TTL
 ): Promise<boolean> => {
 	const hashedOtp = hashOtp(otp);
-	console.log(OTP_SECRET);
 	try {
 		await redisClient.set(phoneNumber, hashedOtp, 'EX', ttl);
 		return true;
