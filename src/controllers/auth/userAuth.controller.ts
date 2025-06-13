@@ -80,8 +80,8 @@ export const registerUser = asyncHandler(
 
 export const loginWithOtp = asyncHandler(
 	async (req: Request, res: Response) => {
-		const { phoneNumber, otp, role = 'user' } = req.body;
-
+		const { phoneNumber, otp} = req.body;
+		let role = 'user';
 		if (!phoneNumber || !otp) {
 			throw new ApiError(400, 'Phone number and OTP are required');
 		}
@@ -97,6 +97,7 @@ export const loginWithOtp = asyncHandler(
 			user = await User.findOne({ phoneNumber });
 			if (!user) {
 				user = await Captain.findOne({ phoneNumber });
+				role="captain";
 			}
 		}
 
@@ -117,7 +118,7 @@ export const loginWithOtp = asyncHandler(
 				sameSite: 'strict',
 				maxAge: 7 * 24 * 60 * 60 * 1000
 			})
-			.json(new apiResponse(200, { user, token }, 'Login successful'));
+			.json(new apiResponse(200, { user, token, role }, 'Login successful'));
 	}
 );
 

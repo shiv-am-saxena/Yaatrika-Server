@@ -17,7 +17,10 @@ export const registerCaptain = asyncHandler(
 			phoneNumber,
 			gender,
 			countryCode,
-			isVerified
+			isVerified,
+			vehicalCapacity,
+			vehicalPlate,
+			vehicalType
 		} = req.body;
 
 		// ✅ Check for required fields
@@ -29,7 +32,10 @@ export const registerCaptain = asyncHandler(
 				phoneNumber,
 				gender,
 				countryCode,
-				isVerified
+				isVerified,
+				vehicalCapacity,
+				vehicalPlate,
+				vehicalType
 			].some(
 				(field) => typeof field === 'undefined' || String(field).trim() === ''
 			)
@@ -52,7 +58,10 @@ export const registerCaptain = asyncHandler(
 			gender,
 			phoneNumber,
 			isVerified,
-			isKycDone: false
+			isKycDone: false,
+			vehicalCapacity,
+			vehicalPlate,
+			vehicalType
 		});
 
 		if (!user) {
@@ -74,11 +83,7 @@ export const registerCaptain = asyncHandler(
 				maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 			})
 			.json(
-				new apiResponse(
-					201,
-					{ user, token },
-					'Captain registered successfully'
-				)
+				new apiResponse(201, { user, token }, 'Captain registered successfully')
 			);
 	}
 );
