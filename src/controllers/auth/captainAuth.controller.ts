@@ -20,7 +20,8 @@ export const registerCaptain = asyncHandler(
 			isVerified,
 			vehicalCapacity,
 			vehicalPlate,
-			vehicalType
+			vehicalType,
+            vehicalColor
 		} = req.body;
 
 		// ✅ Check for required fields
@@ -35,7 +36,8 @@ export const registerCaptain = asyncHandler(
 				isVerified,
 				vehicalCapacity,
 				vehicalPlate,
-				vehicalType
+				vehicalType,
+                vehicalColor
 			].some(
 				(field) => typeof field === 'undefined' || String(field).trim() === ''
 			)
@@ -61,7 +63,8 @@ export const registerCaptain = asyncHandler(
 			isKycDone: false,
 			vehicalCapacity,
 			vehicalPlate,
-			vehicalType
+			vehicalType,
+            vehicalColor
 		});
 
 		if (!user) {

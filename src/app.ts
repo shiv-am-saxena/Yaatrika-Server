@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req: Request, res: Response) => {
 	res.send('Welcome to Yaatrika API');
 });
-app.get('/verify-token', isLoggedIn, (req: IRequest, res: Response) => {
+app.get('/api/v1/verify-token', isLoggedIn, (req: IRequest, res: Response) => {
 	// This endpoint is used to verify the token and return user details
 	const user = req.user; // Assuming req.user is set by a middleware that verifies the token
 	if (!user) {
