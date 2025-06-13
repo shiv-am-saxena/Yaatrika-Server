@@ -11,7 +11,6 @@ const userSchema = new Schema<IUser>(
 		countryCode: { type: String, required: true, maxlength: 5 },
 		phoneNumber: { type: Number, required: true, maxlength: 10, minlength:10, unique: true },
 		gender: { type: String, enum: ['male', 'female', 'other'], required: true },
-		password: { type: String, required: true, select: false },
 		isKycDone: { type: Boolean, default: false },
 		isVerified: { type: Boolean, default: false },
 		socketId: { type: String, default: null }
@@ -20,28 +19,6 @@ const userSchema = new Schema<IUser>(
 		timestamps: true
 	}
 );
-
-// 🔐 Pre-save hook for hashing password
-userSchema.pre('save', async function (next) {
-	const user = this as mongoose.Document & IUser;
-
-	if (!user.isModified('password')) return next();
-
-	try {
-		const salt = await bcrypt.genSalt(10);
-		user.password = await bcrypt.hash(user.password, salt);
-		return next();
-	} catch (err) {
-		return next(err as Error);
-	}
-});
-
-// 🔍 Compare candidate password with hashed password
-userSchema.methods.comparePassword = async function (
-	candidatePassword: string
-): Promise<boolean> {
-	return bcrypt.compare(candidatePassword, this.password);
-};
 
 // 🔑 Generate JWT token
 userSchema.methods.generateJWT = function (): string {

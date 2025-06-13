@@ -22,7 +22,6 @@ export const registerUser = asyncHandler(
 			firstName,
 			lastName,
 			email,
-			password,
 			phoneNumber,
 			gender,
 			countryCode,
@@ -36,7 +35,6 @@ export const registerUser = asyncHandler(
 				gender,
 				email,
 				countryCode,
-				password,
 				isVerified
 			].some(
 				(field) =>
@@ -57,7 +55,6 @@ export const registerUser = asyncHandler(
 			email,
 			countryCode,
 			gender,
-			password,
 			phoneNumber,
 			isVerified,
 			isKycDone: false
