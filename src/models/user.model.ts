@@ -3,14 +3,15 @@ import mongoose from 'mongoose';
 import { IUser } from '../types/user';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
+import dotenv from 'dotenv';
+dotenv.config();
 const userSchema = new Schema<IUser>(
 	{
 		firstName: { type: String, required: true },
 		lastName: { type: String, required: true },
 		email: { type: String, required: true, unique: true },
 		countryCode: { type: String, required: true, maxlength: 5 },
-		phoneNumber: { type: String, required: true, maxlength: 10, unique: true },
+		phoneNumber: { type: Number, required: true, maxlength: 10, minlength:10, unique: true },
 		gender: { type: String, enum: ['male', 'female', 'other'], required: true },
 		password: { type: String, required: true, select: false },
 		isKycDone: { type: Boolean, default: false },

@@ -5,7 +5,7 @@ export interface IUser extends Document {
 	lastName: string;
 	email: string;
 	countryCode: string;
-	phoneNumber: string;
+	phoneNumber: number;
 	gender: 'male' | 'female' | 'other';
 	password: string;
 	isKycDone: boolean;
