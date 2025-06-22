@@ -29,18 +29,20 @@ export const isLoggedIn = asyncHandler(
 			const payload = jwt.verify(token, process.env.JWT_SECRET!) as jwtPayload;
 
 			let user: IUser | ICaptain | null = null;
-
+			let role: string;
 			if (payload.role === 'captain') {
 				user = await Captain.findById(payload._id);
+				role = 'captain';
 			} else {
 				user = await User.findById(payload._id);
+				role = 'user';
 			}
 
 			if (!user) {
 				throw new ApiError(401, 'Unauthorized: User not found');
 			}
 
-			req.user = user;
+			req.user = {user, role};
 			next();
 		} catch (error: any) {
 			if (error.name === 'TokenExpiredError') {

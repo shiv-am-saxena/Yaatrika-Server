@@ -3,5 +3,8 @@ import { IUser } from '../user'; // adjust import path
 import { Request } from 'express';
 
 export interface IRequest extends Request {
-	user?: IUser | ICaptain;
+	user?: {
+		user?: IUser | ICaptain;
+		role?: string;
+	};
 }
