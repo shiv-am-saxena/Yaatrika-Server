@@ -3,11 +3,13 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { apiResponse } from './utils/apiResponse.js';
 import ApiError from './utils/ApiError.js';
-import authRouter from './routes/user.auth.route.js';
+import authRouter from './routes/auth.route.js';
+import mapsRouter from './routes/map.routes.js';
 import { stream } from './utils/logger.js';
 import morgan from 'morgan';
 import { IRequest } from './types/express/index.js';
 import { isLoggedIn } from './middlewares/isLoggedIn.js';
+import adminRouter from './routes/admin.route.js';
 const app = express();
 
 app.use(morgan('combined', { stream }));
@@ -33,4 +35,6 @@ app.get('/api/v1/verify-token', isLoggedIn, (req: IRequest, res: Response) => {
 	res.status(200).json(new apiResponse(200, user, 'User Authenticated'));
 });
 app.use('/api/v1/auth/', authRouter);
+app.use('/api/v1/map/', mapsRouter);
+app.use('/api/v1/admin/', adminRouter);
 export { app };
