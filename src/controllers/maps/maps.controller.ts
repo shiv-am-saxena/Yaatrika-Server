@@ -60,3 +60,12 @@ export const getSuggestion = asyncHandler(
 			);
 	}
 );
+
+export const getAddress = asyncHandler(async (req:Request, res: Response)=>{
+	const { coords } = req.body;
+	if(!coords){
+		throw new ApiError(400, 'zplease provide the coordinates');
+	}
+	const address = await MapService.fetchAddress(coords.latitude, coords.longitude);
+	res.status(200).json(new apiResponse(200, {address}, "Address fetched"));
+})

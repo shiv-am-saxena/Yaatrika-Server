@@ -84,4 +84,27 @@ export class MapService {
 
         return response.data.predictions.map((prediction: any) => prediction);
     }
+    static async fetchAddress(latitude: number, longitude: number): Promise<string> {
+        if (!GOOGLE_MAPS_API_KEY) {
+            throw new ApiError(500, 'Google Maps API key is not set');
+        }
+
+        const url = 'https://maps.googleapis.com/maps/api/geocode/json';
+        const params = {
+            latlng: `${latitude},${longitude}`,
+            key: GOOGLE_MAPS_API_KEY,
+        };
+
+        const response = await axios.get(url, { params });
+
+        if (
+            response.data.status !== 'OK' ||
+            !response.data.results ||
+            response.data.results.length === 0
+        ) {
+            throw new ApiError(400, 'Unable to fetch address for the provided coordinates.');
+        }
+
+        return response.data.results[0].formatted_address;
+    }
 }
