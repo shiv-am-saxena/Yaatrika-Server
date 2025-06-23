@@ -32,6 +32,11 @@ const rideSchema = new Schema<IRide>(
 			enum: ['pending', 'accepted', 'ongoing', 'completed', 'cancelled'],
 			default: 'pending'
 		},
+		vehicleType:{
+			type: String,
+			enum: ['sedan', 'bike', 'auto', 'suv'],
+			required: true,
+		},
 		duration: {
 			type: Number, // in seconds
 			required: true,
@@ -52,8 +57,11 @@ const rideSchema = new Schema<IRide>(
 		},
 		signature: {
 			type: String,
-			required: true,
 			trim: true
+		},
+		otp:{
+			type: Number,
+			select: false,
 		}
 	},
 	{

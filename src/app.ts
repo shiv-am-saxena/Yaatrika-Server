@@ -10,6 +10,7 @@ import morgan from 'morgan';
 import { IRequest } from './types/express/index.js';
 import { isLoggedIn } from './middlewares/isLoggedIn.js';
 import adminRouter from './routes/admin.route.js';
+import rideRouter from './routes/ride.route.js';
 const app = express();
 
 app.use(morgan('combined', { stream }));
@@ -37,4 +38,5 @@ app.get('/api/v1/verify-token', isLoggedIn, (req: IRequest, res: Response) => {
 app.use('/api/v1/auth/', authRouter);
 app.use('/api/v1/map/', mapsRouter);
 app.use('/api/v1/admin/', adminRouter);
+app.use('/api/v1/ride/', rideRouter);
 export { app };

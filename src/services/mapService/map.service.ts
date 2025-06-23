@@ -1,7 +1,9 @@
 import axios from 'axios';
 import ApiError from '../../utils/ApiError.js';
+import { getTimeDistance } from '../../types/maps.js';
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+
 
 export class MapService {
     static async getGeolocation(address: string): Promise<{ lat: number; lng: number }> {
@@ -28,7 +30,7 @@ export class MapService {
         const location = response.data.results[0].geometry.location;
         return { lat: location.lat, lng: location.lng };
     }
-    static async getTimeDistance(origin: string, destination: string): Promise<{ duration: string; distance: string }> {
+    static async getTimeDistance(origin: string, destination: string): Promise<getTimeDistance> {
         if (!GOOGLE_MAPS_API_KEY) {
             throw new ApiError(500, 'Google Maps API key is not set');
         }
