@@ -82,7 +82,10 @@ export class MapService {
             throw new ApiError(400, 'Unable to fetch autocomplete suggestions.');
         }
 
-        return response.data.predictions.map((prediction: any) => prediction);
+        return response.data.predictions.map((prediction: any) => ({
+            name: prediction.description,
+            address: prediction.structured_formatting.secondary_text
+        }));
     }
     static async fetchAddress(latitude: number, longitude: number): Promise<string> {
         if (!GOOGLE_MAPS_API_KEY) {

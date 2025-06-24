@@ -46,7 +46,7 @@ export const getTimeDistance = asyncHandler(
 
 export const getSuggestion = asyncHandler(
 	async (req: Request, res: Response) => {
-		const input = req.query.input as string;
+		const { input } = req.body;
 		if (!input) {
 			throw new ApiError(400, 'Query is required to search');
 		}
@@ -61,11 +61,14 @@ export const getSuggestion = asyncHandler(
 	}
 );
 
-export const getAddress = asyncHandler(async (req:Request, res: Response)=>{
+export const getAddress = asyncHandler(async (req: Request, res: Response) => {
 	const { coords } = req.body;
-	if(!coords){
-		throw new ApiError(400, 'zplease provide the coordinates');
+	if (!coords) {
+		throw new ApiError(400, 'Please provide the coordinates');
 	}
-	const address = await MapService.fetchAddress(coords.latitude, coords.longitude);
-	res.status(200).json(new apiResponse(200, {address}, "Address fetched"));
-})
+	const address = await MapService.fetchAddress(
+		coords.latitude,
+		coords.longitude
+	);
+	res.status(200).json(new apiResponse(200, { address }, 'Address fetched'));
+});
