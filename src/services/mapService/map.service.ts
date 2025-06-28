@@ -87,14 +87,14 @@ export class MapService {
             address: prediction.structured_formatting.secondary_text
         }));
     }
-    static async fetchAddress(latitude: number, longitude: number): Promise<string> {
+    static async fetchAddress(lat: number, lng: number): Promise<string> {
         if (!GOOGLE_MAPS_API_KEY) {
             throw new ApiError(500, 'Google Maps API key is not set');
         }
 
         const url = 'https://maps.googleapis.com/maps/api/geocode/json';
         const params = {
-            latlng: `${latitude},${longitude}`,
+            latlng: `${lat},${lng}`,
             key: GOOGLE_MAPS_API_KEY,
         };
 

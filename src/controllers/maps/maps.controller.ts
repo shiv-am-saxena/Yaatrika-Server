@@ -67,8 +67,8 @@ export const getAddress = asyncHandler(async (req: Request, res: Response) => {
 		throw new ApiError(400, 'Please provide the coordinates');
 	}
 	const address = await MapService.fetchAddress(
-		coords.latitude,
-		coords.longitude
+		coords.lat,
+		coords.lng
 	);
 	res.status(200).json(new apiResponse(200, { address }, 'Address fetched'));
 });
