@@ -1,23 +1,32 @@
 import axios from 'axios';
 import ApiError from '../../utils/ApiError.js';
 import { getTimeDistance } from '../../types/maps.js';
+import { signUrl } from "@googlemaps/url-signature";
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-
+const GOOGLE_HTTP_SECRET = process.env.GOOGLE_HTTP_SECRET;
 
 export class MapService {
     static async getGeolocation(address: string): Promise<{ lat: number; lng: number }> {
-        if (!GOOGLE_MAPS_API_KEY) {
+        if (!GOOGLE_MAPS_API_KEY || !GOOGLE_HTTP_SECRET) {
             throw new ApiError(500, 'Google Maps API key is not set');
         }
 
         const url = `https://maps.googleapis.com/maps/api/geocode/json`;
+
         const params = {
             address,
             key: GOOGLE_MAPS_API_KEY,
         };
 
-        const response = await axios.get(url, { params });
+        // Build the unsigned URL with query params
+        const queryString = new URLSearchParams(params).toString();
+        const unsignedUrl = `${url}?${queryString}`;
+
+        // Sign the URL using the HTTP secret
+        const signedUrl = signUrl(unsignedUrl, GOOGLE_HTTP_SECRET);
+
+        const response = await axios.get(signedUrl.toString());
 
         if (
             response.data.status !== 'OK' ||
@@ -31,7 +40,7 @@ export class MapService {
         return { lat: location.lat, lng: location.lng };
     }
     static async getTimeDistance(origin: string, destination: string): Promise<getTimeDistance> {
-        if (!GOOGLE_MAPS_API_KEY) {
+        if (!GOOGLE_MAPS_API_KEY || !GOOGLE_HTTP_SECRET) {
             throw new ApiError(500, 'Google Maps API key is not set');
         }
 
@@ -42,7 +51,14 @@ export class MapService {
             key: GOOGLE_MAPS_API_KEY,
         };
 
-        const response = await axios.get(url, { params });
+        // Build the unsigned URL with query params
+        const queryString = new URLSearchParams(params).toString();
+        const unsignedUrl = `${url}?${queryString}`;
+
+        // Sign the URL using the HTTP secret
+        const signedUrl = signUrl(unsignedUrl, GOOGLE_HTTP_SECRET);
+
+        const response = await axios.get(signedUrl.toString());
 
         if (
             response.data.status !== 'OK' ||
@@ -62,17 +78,23 @@ export class MapService {
         };
     }
     static async autocompleteInput(input: string): Promise<string[]> {
-        if (!GOOGLE_MAPS_API_KEY) {
+        if (!GOOGLE_MAPS_API_KEY || !GOOGLE_HTTP_SECRET) {
             throw new ApiError(500, 'Google Maps API key is not set');
         }
-
         const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json`;
         const params = {
             input,
             key: GOOGLE_MAPS_API_KEY,
         };
 
-        const response = await axios.get(url, { params });
+        // Build the unsigned URL with query params
+        const queryString = new URLSearchParams(params).toString();
+        const unsignedUrl = `${url}?${queryString}`;
+
+        // Sign the URL using the HTTP secret
+        const signedUrl = signUrl(unsignedUrl, GOOGLE_HTTP_SECRET);
+
+        const response = await axios.get(signedUrl.toString());
 
         if (
             response.data.status !== 'OK' ||
@@ -88,7 +110,7 @@ export class MapService {
         }));
     }
     static async fetchAddress(lat: number, lng: number): Promise<string> {
-        if (!GOOGLE_MAPS_API_KEY) {
+        if (!GOOGLE_MAPS_API_KEY || !GOOGLE_HTTP_SECRET) {
             throw new ApiError(500, 'Google Maps API key is not set');
         }
 
@@ -98,7 +120,14 @@ export class MapService {
             key: GOOGLE_MAPS_API_KEY,
         };
 
-        const response = await axios.get(url, { params });
+        // Build the unsigned URL with query params
+        const queryString = new URLSearchParams(params).toString();
+        const unsignedUrl = `${url}?${queryString}`;
+
+        // Sign the URL using the HTTP secret
+        const signedUrl = signUrl(unsignedUrl, GOOGLE_HTTP_SECRET);
+
+        const response = await axios.get(signedUrl.toString());
 
         if (
             response.data.status !== 'OK' ||

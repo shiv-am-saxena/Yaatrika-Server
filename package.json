@@ -28,6 +28,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@googlemaps/url-signature": "^1.0.40",
     "@types/twilio": "^3.19.3",
     "axios": "^1.10.0",
     "bcrypt": "^5.1.1",
