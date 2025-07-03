@@ -26,6 +26,10 @@ const captainSchema = new Schema<ICaptain>(
 		location: {
 			latitude: { type: String, default: null },
 			longitude: { type: String, default: null }
+		},
+		avatar: {
+			url: { type: String, default: null },
+			publicId: { type: String, default: null }
 		}
 	},
 	{

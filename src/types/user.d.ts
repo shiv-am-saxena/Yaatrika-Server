@@ -10,7 +10,10 @@ export interface IUser extends Document {
 	isKycDone: boolean;
 	isVerified: boolean;
 	socketId?: string | null;
-
+	avatar?: {
+		url: string | null;
+		publicId: string| null;
+	};
 	generateJWT(): string;
 	verifyJWT(token: string): boolean;
 }

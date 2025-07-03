@@ -15,9 +15,13 @@ import { IRequest } from '../../types/express/index';
 import { otpVerification } from '../../services/otpVerification.service.js';
 import { ICaptain } from '../../types/captain';
 import Captain from '../../models/captain.model.js';
+import {
+	deleteFromCloudinary,
+	uploadToCloudinary
+} from '../../services/cloudinary/cloudinaryServices.js';
 
 export const registerUser = asyncHandler(
-	async (req: IRequest, res: Response) => {
+	async (req: Request, res: Response) => {
 		const {
 			firstName,
 			lastName,
@@ -74,13 +78,19 @@ export const registerUser = asyncHandler(
 				sameSite: 'strict',
 				maxAge: 7 * 24 * 60 * 60 * 1000
 			})
-			.json(new apiResponse(201, { user, token }, 'User Registered Successfully'));
+			.json(
+				new apiResponse(
+					201,
+					{ user, token, role: 'user' },
+					'User Registered Successfully'
+				)
+			);
 	}
 );
 
 export const loginWithOtp = asyncHandler(
 	async (req: Request, res: Response) => {
-		const { phoneNumber, otp} = req.body;
+		const { phoneNumber, otp } = req.body;
 		let role = 'user';
 		if (!phoneNumber || !otp) {
 			throw new ApiError(400, 'Phone number and OTP are required');
@@ -97,7 +107,7 @@ export const loginWithOtp = asyncHandler(
 			user = await User.findOne({ phoneNumber });
 			if (!user) {
 				user = await Captain.findOne({ phoneNumber });
-				role="captain";
+				role = 'captain';
 			}
 		}
 
@@ -194,3 +204,82 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
 
 	res.status(200).json(new apiResponse(200, true, 'OTP Verified Successfully'));
 });
+
+export const avatarUpload = asyncHandler(
+	async (req: IRequest, res: Response) => {
+		const id = req?.user?.user._id;
+		const role = req?.user?.role;
+		if (!id || !role) {
+			throw new ApiError(400, 'User or role information missing');
+		}
+		if (!req.file) throw new ApiError(400, 'No file provided');
+		const folder = `yaatrika/avatars/${role}`;
+
+		const fileBuffer = req.file.buffer;
+
+		let userOrCaptain;
+		if (role === 'user') {
+			userOrCaptain = await User.findById(id);
+		} else if (role === 'captain') {
+			userOrCaptain = await Captain.findById(id);
+		} else {
+			throw new ApiError(400, 'Invalid Role');
+		}
+
+		if (!userOrCaptain) {
+			throw new ApiError(404, `${role} not found`);
+		}
+
+		// Remove old avatar from Cloudinary if exists
+		if (userOrCaptain.avatar?.publicId) {
+			await deleteFromCloudinary(userOrCaptain.avatar.publicId);
+		}
+
+		// Upload new avatar
+		const uploadResult: any = await uploadToCloudinary(fileBuffer, folder);
+
+		userOrCaptain.avatar = {
+			url: uploadResult.secure_url,
+			publicId: uploadResult.public_id
+		};
+
+		await userOrCaptain.save();
+
+		res.status(200).json(
+			new apiResponse(
+				201,
+				{
+					url: uploadResult.secure_url,
+					publicId: uploadResult.public_id
+				},
+				'Avatar uploaded successfully'
+			)
+		);
+	}
+);
+
+export const updateProfile = asyncHandler(
+	async (req: IRequest, res: Response) => {
+		const id = req?.user?.user._id;
+		const { fullName, email, phoneNumber } = req.body;
+		if (
+			[
+				fullName,
+				phoneNumber,
+				email,
+			].some(
+				(field) =>
+					typeof field === 'undefined' ||
+					(typeof field === 'string' && field.trim() === '')
+			)
+		) {
+			throw new ApiError(400, 'All fields are required');
+		}
+		const {firstName, lastName} = fullName.split(" ");
+		const user = await User.findByIdAndUpdate({_id: id}, {firstName, lastName, phoneNumber, email});
+		if(!user){
+			throw new ApiError(500, "Failed to update profile");
+		}
+		res.status(200).json(new  apiResponse(200, {user}, "Profile updated successfully"));
+	}
+);

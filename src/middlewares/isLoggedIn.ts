@@ -28,7 +28,7 @@ export const isLoggedIn = asyncHandler(
 		try {
 			const payload = jwt.verify(token, process.env.JWT_SECRET!) as jwtPayload;
 
-			let user: IUser | ICaptain | null = null;
+			let user: IUser | ICaptain | null;
 			let role: string;
 			if (payload.role === 'captain') {
 				user = await Captain.findById(payload._id);

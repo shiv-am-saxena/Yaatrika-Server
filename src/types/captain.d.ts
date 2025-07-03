@@ -9,16 +9,20 @@ export interface ICaptain extends Document {
 	isKycDone: boolean;
 	isVerified: boolean;
 	socketId?: string | null;
-    vehicalColor: string;
-    vehicalPlate?: string | null;
-    vehicalCapacity?: number | null;
-    vehicalType: string;
-    status: string;
-    location?: Location;
+	vehicalColor: string;
+	vehicalPlate?: string | null;
+	vehicalCapacity?: number | null;
+	vehicalType: string;
+	status: string;
+	location?: Location;
+	avatar?: {
+		url: string | null;
+		publicId: string| null;
+	};
 	generateJWT(): string;
 }
 
-type Location= {
-    latitude: string | null;
-    longitude: string | null;
-}
+type Location = {
+	latitude: string | null;
+	longitude: string | null;
+};
