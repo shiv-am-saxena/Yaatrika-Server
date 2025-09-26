@@ -51,7 +51,7 @@ export const isLoggedIn = asyncHandler(
 
 			if (error.name === 'JsonWebTokenError') {
 				throw new ApiError(401, 'Unauthorized: Invalid token');
-			}
+			}	
 
 			console.error('Unexpected error in isLoggedIn:', error);
 			throw new ApiError(500, 'Internal Server Error during authentication');
