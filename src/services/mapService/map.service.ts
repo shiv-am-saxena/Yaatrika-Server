@@ -1,6 +1,6 @@
 import axios from 'axios';
 import ApiError from '../../utils/ApiError.js';
-import { getTimeDistance } from '../../types/maps.js';
+import { getTimeDistance } from '../../types/maps';
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 

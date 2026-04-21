@@ -7,8 +7,8 @@ import {
 	calculateFareForAllVehicles
 } from '../../services/fareService/fare.service.js';
 import Ride from '../../models/ride.model.js';
-import { IRide } from '../../types/ride.js';
-import { getTimeDistance } from '../../types/maps.js';
+import { IRide } from '../../types/ride';
+import { getTimeDistance } from '../../types/maps';
 import { apiResponse } from '../../utils/apiResponse.js';
 import { emitToAccount, emitToRole } from '../../socket/socket.js';
 

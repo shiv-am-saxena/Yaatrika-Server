@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import ApiError from '../../utils/ApiError.js';
-import { IUser } from '../../types/user.js';
+import { IUser } from '../../types/user';
 import User from '../../models/user.model.js';
 import { apiResponse } from '../../utils/apiResponse.js';
 import redisClient from '../../services/redisService.js';
@@ -12,13 +12,13 @@ import {
 import jwt from 'jsonwebtoken';
 import { sendVerificationOtp } from '../../services/otpService/sms.service.js';
 import { otpVerification } from '../../services/otpVerification.service.js';
-import { ICaptain } from '../../types/captain.js';
+import { ICaptain } from '../../types/captain';
 import Captain from '../../models/captain.model.js';
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary
 } from '../../services/cloudinary/cloudinaryServices.js';
-import { jwtPayload } from '../../types/jwtPayload.js';
+import { jwtPayload } from '../../types/jwtPayload';
 
 export const registerUser = asyncHandler(
 	async (req: Request, res: Response) => {

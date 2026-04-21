@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import { jwtPayload } from '../types/jwtPayload.js';
+import { jwtPayload } from '../types/jwtPayload';
 import redisClient from '../services/redisService.js';
 import User from '../models/user.model.js';
 import Captain from '../models/captain.model.js';

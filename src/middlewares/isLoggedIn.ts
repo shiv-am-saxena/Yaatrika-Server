@@ -6,8 +6,8 @@ import { jwtPayload } from '../types/jwtPayload';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import User from '../models/user.model.js';
 import Captain from '../models/captain.model.js';
-import { IUser } from '../types/user.js';
-import {ICaptain} from '../types/captain.js';
+import { IUser } from '../types/user';
+import {ICaptain} from '../types/captain';
 
 export const isLoggedIn = asyncHandler(
 	async (req: Request, res: Response, next: NextFunction) => {

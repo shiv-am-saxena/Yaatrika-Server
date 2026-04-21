@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
-import { IUser } from '../user.js';
-import { ICaptain } from '../captain.js';
+import { IUser } from '../user';
+import { ICaptain } from '../captain';
 
 declare global {
 	namespace Express {
