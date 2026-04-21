@@ -1,5 +1,5 @@
 import mongoose, { Schema, model } from 'mongoose';
-import { IRide } from '../types/ride';
+import { IRide } from '../types/ride.js';
 
 const rideSchema = new Schema<IRide>(
 	{

@@ -2,12 +2,12 @@ import { Request ,Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import redisClient from '../services/redisService.js';
 import ApiError from '../utils/ApiError.js';
-import { jwtPayload } from '../types/jwtPayload';
+import { jwtPayload } from '../types/jwtPayload.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import User from '../models/user.model.js';
 import Captain from '../models/captain.model.js';
-import { IUser } from '../types/user';
-import {ICaptain} from '../types/captain';
+import { IUser } from '../types/user.js';
+import { ICaptain } from '../types/captain.js';
 
 export const isLoggedIn = asyncHandler(
 	async (req: Request, res: Response, next: NextFunction) => {

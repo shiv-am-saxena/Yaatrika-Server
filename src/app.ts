@@ -41,5 +41,5 @@ app.use('/api/v1/map/', mapsRouter);
 app.use('/api/v1/admin/', adminRouter);
 app.use('/api/v1/ride/', rideRouter);
 app.use('/api/v1/payment/', paymentRouter);
-app.use('/api/vi/cloudinary/', cloudinaryRouter);
+app.use('/api/v1/cloudinary/', cloudinaryRouter);
 export { app };

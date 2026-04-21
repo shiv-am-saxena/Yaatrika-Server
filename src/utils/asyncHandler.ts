@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { RequestHandler } from '../types/requestHandler';
+import { RequestHandler } from '../types/requestHandler.js';
 
 const asyncHandler = (requestHandler: RequestHandler) => {
     return (req: Request, res: Response, next: NextFunction): void | Promise<void> => {

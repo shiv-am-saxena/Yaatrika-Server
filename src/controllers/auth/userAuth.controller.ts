@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import ApiError from '../../utils/ApiError.js';
-import { IUser } from '../../types/user';
+import { IUser } from '../../types/user.js';
 import User from '../../models/user.model.js';
 import { apiResponse } from '../../utils/apiResponse.js';
 import redisClient from '../../services/redisService.js';
@@ -12,13 +12,13 @@ import {
 import jwt from 'jsonwebtoken';
 import { sendVerificationOtp } from '../../services/otpService/sms.service.js';
 import { otpVerification } from '../../services/otpVerification.service.js';
-import { ICaptain } from '../../types/captain';
+import { ICaptain } from '../../types/captain.js';
 import Captain from '../../models/captain.model.js';
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary
 } from '../../services/cloudinary/cloudinaryServices.js';
-import { jwtPayload } from '../../types/jwtPayload';
+import { jwtPayload } from '../../types/jwtPayload.js';
 
 export const registerUser = asyncHandler(
 	async (req: Request, res: Response) => {
@@ -283,7 +283,7 @@ export const updateProfile = asyncHandler(
 		) {
 			throw new ApiError(400, 'All fields are required');
 		}
-		const { firstName, lastName } = fullName.split(' ');
+		const [firstName, lastName] = fullName.split(' ');
 		const user = await User.findByIdAndUpdate(
 			{ _id: id },
 			{ firstName, lastName, phoneNumber, email }

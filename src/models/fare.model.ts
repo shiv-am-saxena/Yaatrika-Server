@@ -1,6 +1,6 @@
 // models/FareRate.ts
 import mongoose, { Schema } from 'mongoose';
-import { IFareRate } from '../types/fare';
+import { IFareRate } from '../types/fare.js';
 
 const fareRateSchema = new Schema<IFareRate>(
 	{

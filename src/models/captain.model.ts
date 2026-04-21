@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { ICaptain } from '../types/captain';
+import { ICaptain } from '../types/captain.js';
 import jwt from 'jsonwebtoken';
 const captainSchema = new Schema<ICaptain>(
 	{
