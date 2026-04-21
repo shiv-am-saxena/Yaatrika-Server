@@ -3,7 +3,7 @@ import ApiError from '../../utils/ApiError.js';
 import { apiResponse } from '../../utils/apiResponse.js';
 import Captain from '../../models/captain.model.js';
 import { Request, Response } from 'express';
-import { ICaptain } from '../../types/captain';
+import { ICaptain } from '../../types/captain.js';
 
 // ============================
 // ✅ Captain Registration

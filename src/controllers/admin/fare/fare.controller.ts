@@ -1,12 +1,11 @@
 // controllers/adminFareController.ts
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import FareRate from '../../../models/fare.model.js';
-import { IRequest } from '../../../types/express/index.js';
 import { asyncHandler } from '../../../utils/asyncHandler.js';
 import { apiResponse } from '../../../utils/apiResponse.js';
 
 export const setFareRates = asyncHandler(
-	async (req: IRequest, res: Response) => {
+	async (req: Request, res: Response) => {
 		const { rates } = req.body;
 		const adminId = req.user?.user?._id;
 

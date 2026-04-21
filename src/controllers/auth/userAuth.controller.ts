@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import ApiError from '../../utils/ApiError.js';
-import { IUser } from '../../types/user';
+import { IUser } from '../../types/user.js';
 import User from '../../models/user.model.js';
 import { apiResponse } from '../../utils/apiResponse.js';
 import redisClient from '../../services/redisService.js';
@@ -11,14 +11,14 @@ import {
 } from '../../services/otpService/otp.service.js';
 import jwt from 'jsonwebtoken';
 import { sendVerificationOtp } from '../../services/otpService/sms.service.js';
-import { IRequest } from '../../types/express/index';
 import { otpVerification } from '../../services/otpVerification.service.js';
-import { ICaptain } from '../../types/captain';
+import { ICaptain } from '../../types/captain.js';
 import Captain from '../../models/captain.model.js';
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary
 } from '../../services/cloudinary/cloudinaryServices.js';
+import { jwtPayload } from '../../types/jwtPayload.js';
 
 export const registerUser = asyncHandler(
 	async (req: Request, res: Response) => {
@@ -139,8 +139,20 @@ export const logout = async (req: Request, res: Response) => {
 		throw new ApiError(400, 'Token Missing! Unable to Logout');
 	}
 
-	const decoded = jwt.decode(token) as { exp: number };
-	const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+	const decoded = jwt.decode(token) as (jwtPayload & { exp: number }) | null;
+	if (!decoded?.exp) {
+		throw new ApiError(401, 'Invalid token');
+	}
+
+	if (decoded._id && decoded.role) {
+		if (decoded.role === 'captain') {
+			await Captain.findByIdAndUpdate(decoded._id, { socketId: null });
+		} else {
+			await User.findByIdAndUpdate(decoded._id, { socketId: null });
+		}
+	}
+
+	const ttl = Math.max(decoded.exp - Math.floor(Date.now() / 1000), 1);
 
 	await redisClient.setex(`blacklistedToken:${token}`, ttl, 'true');
 
@@ -206,8 +218,8 @@ export const verifyOtp = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const avatarUpload = asyncHandler(
-	async (req: IRequest, res: Response) => {
-		const id = req?.user?.user._id;
+	async (req: Request, res: Response) => {
+		const id = req?.user?.user?._id;
 		const role = req?.user?.role;
 		if (!id || !role) {
 			throw new ApiError(400, 'User or role information missing');
@@ -259,15 +271,11 @@ export const avatarUpload = asyncHandler(
 );
 
 export const updateProfile = asyncHandler(
-	async (req: IRequest, res: Response) => {
-		const id = req?.user?.user._id;
+	async (req: Request, res: Response) => {
+		const id = req?.user?.user?._id;
 		const { fullName, email, phoneNumber } = req.body;
 		if (
-			[
-				fullName,
-				phoneNumber,
-				email,
-			].some(
+			[fullName, phoneNumber, email].some(
 				(field) =>
 					typeof field === 'undefined' ||
 					(typeof field === 'string' && field.trim() === '')
@@ -275,11 +283,16 @@ export const updateProfile = asyncHandler(
 		) {
 			throw new ApiError(400, 'All fields are required');
 		}
-		const {firstName, lastName} = fullName.split(" ");
-		const user = await User.findByIdAndUpdate({_id: id}, {firstName, lastName, phoneNumber, email});
-		if(!user){
-			throw new ApiError(500, "Failed to update profile");
+		const { firstName, lastName } = fullName.split(' ');
+		const user = await User.findByIdAndUpdate(
+			{ _id: id },
+			{ firstName, lastName, phoneNumber, email }
+		);
+		if (!user) {
+			throw new ApiError(500, 'Failed to update profile');
 		}
-		res.status(200).json(new  apiResponse(200, {user}, "Profile updated successfully"));
+		res
+			.status(200)
+			.json(new apiResponse(200, { user }, 'Profile updated successfully'));
 	}
 );

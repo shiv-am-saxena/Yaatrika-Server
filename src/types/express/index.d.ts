@@ -1,10 +1,14 @@
-import { ICaptain } from '../captain';
-import { IUser } from '../user'; // adjust import path
-import { Request } from 'express';
+import { Types } from 'mongoose';
+import { IUser } from '../user.js';
+import { ICaptain } from '../captain.js';
 
-export interface IRequest extends Request {
-	user?: {
-		user: IUser | ICaptain;
-		role: string;
-	};
+declare global {
+	namespace Express {
+		interface Request {
+			user?: {
+				user?: IUser | ICaptain;
+				role?: string;
+			};
+		}
+	}
 }
