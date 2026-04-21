@@ -20,7 +20,7 @@ const captainSchema = new Schema<ICaptain>(
 		socketId: { type: String, default: null },
 		vehicalColor: { type: String, default: 'pink' },
 		vehicalCapacity: { type: Number, default: null },
-		vehicalType: { type: String, enum: ['car', 'auto', 'bike'], default: 'car' },
+		vehicalType: { type: String, enum: ['sedan', 'suv', 'auto', 'bike'], default: 'sedan' },
 		vehicalPlate: { type: String, default: null },
 		status: { type: String, enum: ['active', 'inactive'], default: 'inactive' },
 		location: {

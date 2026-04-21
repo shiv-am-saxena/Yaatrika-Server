@@ -11,6 +11,7 @@ type SocketUserRole = 'user' | 'captain';
 interface SocketAuthData {
 	userId: string;
 	role: SocketUserRole;
+	vehicleType?: string;
 }
 
 let io: Server | null = null;
@@ -76,7 +77,7 @@ export const initializeSocketServer = (httpServer: HttpServer): Server => {
 			const role: SocketUserRole = payload.role === 'captain' ? 'captain' : 'user';
 			const account =
 				role === 'captain'
-					? await Captain.findById(payload._id).select('_id')
+					? await Captain.findById(payload._id).select('_id vehicalType')
 					: await User.findById(payload._id).select('_id');
 
 			if (!account?._id) {
@@ -85,6 +86,9 @@ export const initializeSocketServer = (httpServer: HttpServer): Server => {
 
 			(socket.data as SocketAuthData).userId = account._id.toString();
 			(socket.data as SocketAuthData).role = role;
+			if (role === 'captain' && 'vehicalType' in account) {
+				(socket.data as SocketAuthData).vehicleType = (account as any).vehicalType;
+			}
 			next();
 		} catch (error) {
 			next(new Error('Unauthorized: Invalid token'));
@@ -97,11 +101,27 @@ export const initializeSocketServer = (httpServer: HttpServer): Server => {
 		try {
 			socket.join(`${role}:${userId}`);
 			socket.join(`role:${role}`);
+			
+			const { vehicleType } = socket.data as SocketAuthData;
+			if (role === 'captain' && vehicleType) {
+				socket.join(`vehicle:${vehicleType}`);
+			}
+
 			await updateSocketId(userId, role, socket.id);
 			socket.emit('socket:connected', { socketId: socket.id, role });
 		} catch (error) {
 			console.error('Socket connect setup failed:', error);
 		}
+
+		socket.on('message:send', ({ targetId, targetRole, message }) => {
+			if (!targetId || !targetRole || !message) return;
+			emitToAccount(targetRole, targetId, 'message:received', {
+				senderId: userId,
+				senderRole: role,
+				message,
+				timestamp: new Date()
+			});
+		});
 
 		socket.on('disconnect', async () => {
 			try {
@@ -151,4 +171,16 @@ export const emitToAccount = (
 	}
 
 	io.to(`${role}:${accountId}`).emit(eventName, payload);
+};
+
+export const emitToVehicle = (
+	vehicleType: string,
+	eventName: string,
+	payload: unknown
+): void => {
+	if (!io) {
+		return;
+	}
+
+	io.to(`vehicle:${vehicleType}`).emit(eventName, payload);
 };

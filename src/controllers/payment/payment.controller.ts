@@ -21,7 +21,7 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
 	const ride = await Ride.findOne({ _id: rideId, user: userId });
 	if (!ride) throw new ApiError(404, 'Ride not found');
 
-	if (ride.status !== 'completed') {
+	if (ride.status !== 'dropped') {
 		throw new ApiError(409, 'Payment not allowed yet');
 	}
 
@@ -44,6 +44,7 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
 	await Payment.create({
 		ride: ride._id,
 		amount: ride.fare,
+		method: 'razorpay',
 		razorpay_order_id: order.id,
 		status: 'pending'
 	});

@@ -29,7 +29,7 @@ const rideSchema = new Schema<IRide>(
 		},
 		status: {
 			type: String,
-			enum: ['pending', 'accepted', 'ongoing', 'completed', 'cancelled'],
+			enum: ['pending', 'accepted', 'ongoing', 'dropped', 'completed', 'cancelled'],
 			default: 'pending'
 		},
 		vehicleType:{

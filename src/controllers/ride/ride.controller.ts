@@ -10,7 +10,7 @@ import Ride from '../../models/ride.model.js';
 import { IRide } from '../../types/ride.js';
 import { getTimeDistance } from '../../types/maps.js';
 import { apiResponse } from '../../utils/apiResponse.js';
-import { emitToAccount, emitToRole } from '../../socket/socket.js';
+import { emitToAccount, emitToRole, emitToVehicle } from '../../socket/socket.js';
 
 const generateRideOtp = (): number =>
 	Math.floor(100000 + Math.random() * 900000);
@@ -79,7 +79,7 @@ export const createRide = asyncHandler(
 
 		const ridePayload = sanitizeRidePayload(newRide);
 
-		emitToRole('captain', 'ride:new-request', {
+		emitToVehicle(vehicleType, 'ride:new-request', {
 			ride: ridePayload,
 			riderId: userId
 		});
@@ -144,6 +144,8 @@ export const acceptRide = asyncHandler(
 		const ridePayload = sanitizeRidePayload(acceptedRide);
 		const riderId = resolveEntityId(acceptedRide.user);
 		const captainAccountId = resolveEntityId(acceptedRide.captain);
+
+		console.log(`Emitting ride:accepted to user room user:${riderId}`);
 
 		emitToAccount('captain', captainAccountId, 'ride:accepted', {
 			ride: ridePayload
@@ -217,6 +219,62 @@ export const startRideWithOtp = asyncHandler(
 			.status(200)
 			.json(
 				new apiResponse(200, { ride: ridePayload }, 'Ride started successfully')
+			);
+	}
+);
+
+export const endRide = asyncHandler(
+	async (req: Request, res: Response, next) => {
+		const role = req.user?.role;
+		const captainId = req.user?.user?._id;
+		const { rideId } = req.body;
+
+		if (role !== 'captain') {
+			throw new ApiError(403, 'Only captain can end rides');
+		}
+
+		if (!captainId) {
+			throw new ApiError(401, 'Unauthorized');
+		}
+
+		if (!rideId || typeof rideId !== 'string') {
+			throw new ApiError(400, 'rideId is required');
+		}
+
+		const ride = await Ride.findOne({
+			_id: rideId,
+			captain: captainId,
+			status: 'ongoing'
+		})
+			.populate('user', 'firstName lastName phoneNumber')
+			.populate(
+				'captain',
+				'firstName lastName phoneNumber vehicalType vehicalPlate'
+			);
+
+		if (!ride) {
+			throw new ApiError(404, 'Ongoing ride not found');
+		}
+
+		ride.status = 'dropped';
+		await ride.save();
+
+		const ridePayload = sanitizeRidePayload(ride);
+		const riderId = resolveEntityId(ride.user);
+		const captainAccountId = resolveEntityId(ride.captain);
+
+		emitToAccount('user', riderId, 'ride:ended', {
+			ride: ridePayload
+		});
+
+		emitToAccount('captain', captainAccountId, 'ride:ended', {
+			ride: ridePayload
+		});
+
+		res
+			.status(200)
+			.json(
+				new apiResponse(200, { ride: ridePayload }, 'Ride ended successfully')
 			);
 	}
 );
@@ -298,3 +356,33 @@ export const fareCalculation = asyncHandler(
 		res.status(200).json(new apiResponse(200, { fare }, 'Fare of all vehicles'));
 	}
 );
+export const getCaptainStats = asyncHandler(async (req: Request, res: Response) => {
+	const captainId = req.user?.user?._id;
+	if (!captainId) throw new ApiError(401, 'Unauthorized');
+
+	const startOfDay = new Date();
+	startOfDay.setHours(0, 0, 0, 0);
+
+	const allCompletedRides = await Ride.find({
+		captain: captainId,
+		status: 'completed'
+	});
+
+	const todayRides = allCompletedRides.filter(ride => 
+		new Date(ride.createdAt) >= startOfDay
+	);
+
+	const totalEarnings = allCompletedRides.reduce((sum, ride) => sum + (ride.fare || 0), 0);
+	const todayEarnings = todayRides.reduce((sum, ride) => sum + (ride.fare || 0), 0);
+	const totalDistance = allCompletedRides.reduce((sum, ride) => sum + (ride.distance || 0), 0); // in meters
+
+	res.status(200).json(
+		new apiResponse(200, {
+			totalRides: allCompletedRides.length,
+			todayRides: todayRides.length,
+			totalEarnings: Number(totalEarnings.toFixed(2)),
+			todayEarnings: Number(todayEarnings.toFixed(2)),
+			totalDistanceKm: Number((totalDistance / 1000).toFixed(1))
+		}, 'Stats fetched successfully')
+	);
+});
