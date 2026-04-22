@@ -6,12 +6,20 @@ export interface IRide extends Document {
 	pickup: string;
 	destination: string;
 	fare: number;
-	status: 'pending' | 'accepted' | 'ongoing' | 'completed' | 'cancelled';
+	status:
+		| 'pending'
+		| 'accepted'
+		| 'ongoing'
+		| 'completed'
+		| 'cancelled'
+		| 'dropped';
 	vehicleType: 'sedan' | 'bike' | 'auto' | 'suv';
 	duration: number;
 	distance: number;
 	paymentId: ObjectId;
 	orderId: string;
 	signature: string;
-    otp: number;
+	otp: number;
+	createdAt: Date;
+	updatedAt: Date;
 }
